@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice</title>
+
+<style>
+:root{
+  --main:#3b73b9;
+  --light:#cfe9f8;
+}
+
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f3f6f9;margin:0;padding:20px}
+.invoice{max-width:940px;margin:auto;background:#fff;padding:26px}
+
+/* HEADER */
+.top{display:grid;grid-template-columns:250px 1fr;gap:18px}
+.logo{display:flex;flex-direction:column;gap:8px}
+.logo-box{width:240px;height:85px;border:2px dashed var(--main);display:flex;justify-content:center;align-items:center;cursor:pointer;font-size:26px;color:var(--main)}
+.logo-box img{max-width:100%;max-height:100%;display:none}
+.logo-box.uploaded{border:none}
+.logo-box.uploaded span{display:none}
+.business-name,.business-sub{width:240px;border:none;border-bottom:2px solid var(--main);padding:5px;font-size:14px}
+.business-name{font-weight:bold}
+
+.header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.header-right h1{margin:0;color:var(--main);letter-spacing:4px;font-size:30px}
+
+.biz-stack{width:300px;display:flex;flex-direction:column;gap:5px}
+.biz-stack input{border:none;border-bottom:1px solid #ccc;padding:4px;font-size:12px}
+
+.tax-settings{margin-top:6px;width:300px;display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-size:12px}
+.tax-settings input,.tax-settings select{border:none;border-bottom:1px solid #ccc;padding:4px}
+
+hr{border:none;border-top:2px solid #d0d0d0;margin:12px 0}
+
+/* CLIENT */
+.info{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.info input{width:100%;border:none;border-bottom:1px solid #ccc;padding:4px;font-size:12px;margin-bottom:5px}
+
+.meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end;margin-top:12px}
+.meta .row{display:grid;grid-template-columns:80px 220px;gap:10px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+thead{background:var(--main);color:#fff}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+tbody tr:nth-child(even){background:var(--light)}
+tbody input{width:100%;border:none;background:transparent;text-align:center}
+
+/* BANK + TOTAL */
+.totals-bank{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-top:18px}
+
+.bank-title{margin-bottom:8px}
+
+.bank-grid{
+  display:grid;
+  grid-template-columns:130px 1fr;
+  row-gap:10px;
+  column-gap:12px;
+  font-size:12px;
+  align-items:center;
+}
+
+.bank-grid input{border:1px solid #ccc;padding:6px 8px;height:28px}
+
+.summary td{border:none;padding:5px;text-align:right;font-size:12px}
+.summary .grand{background:var(--main);color:#fff;font-weight:bold}
+
+/* TERMS */
+.terms-box{margin-top:12px}
+.terms-box textarea{width:100%;height:70px;padding:8px;border:1px solid #ccc;resize:none;font-size:12px}
+
+/* THANK YOU */
+.thank-you{margin-top:10px;font-size:12px;font-weight:bold}
+
+/* FOOTER */
+.footer{display:flex;justify-content:flex-end;align-items:flex-end;margin-top:6px;font-size:12px}
+.signature-area{text-align:center}
+
+.signature-box{
+  width:220px;height:80px;border:2px dashed #777;
+  display:flex;justify-content:center;align-items:center;
+  font-size:12px;color:#555;cursor:pointer;margin-top:6px
+}
+.signature-box img{max-width:100%;max-height:100%;display:none}
+.signature-box.uploaded{border:none}
+.signature-box.uploaded span{display:none}
+
+button{margin-top:10px;padding:8px 16px;border:none;background:var(--main);color:#fff}
+
+/* PRINT */
+@media print{
+
+  @page{
+    size: A4;
+    margin: 5mm;
+  }
+
+  body{
+    margin:0;
+    padding:0;
+    background:#fff;
+  }
+
+  .invoice{
+    padding:5mm;
+    max-height:287mm;
+    overflow:hidden;
+    transform:scale(0.93);
+    transform-origin:top left;
+  }
+
+  /* Force colors to print */
+  *{
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide controls in PDF */
+  .tax-settings,
+  button,
+  .theme-control,
+  .color-picker{
+    display:none !important;
+  }
+
+}</style>
+</head>
+
+<body>
+<div class="invoice">
+
+<div class="top">
+<div class="logo">
+<label class="logo-box" id="logoBox">
+<span>+</span>
+<img id="logoImg">
+<input type="file" hidden onchange="loadLogo(event)">
+</label>
+<input class="business-name" placeholder="Business Name">
+<input class="business-sub" placeholder="Company slogan">
+</div>
+
+<div class="header-right">
+<h1>INVOICE</h1>
+<div class="biz-stack">
+<input placeholder="Business Address">
+<input placeholder="Business Phone">
+<input placeholder="Business Email">
+<input placeholder="Business VAT / Tax Number">
+</div>
+
+<div class="tax-settings">
+
+<label>Currency</label>
+<select id="currency" onchange="calc()">
+<option value="$">$ USD</option>
+<option value="€">€ EUR</option>
+<option value="£">£ GBP</option>
+<option value="R">R ZAR</option>
+<option value="¥">¥ JPY</option>
+<option value="₹">₹ INR</option>
+<option value="A$">A$ AUD</option>
+<option value="C$">C$ CAD</option>
+<option value="₣">₣ CHF</option>
+<option value="₩">₩ KRW</option>
+<option value="₦">₦ NGN</option>
+</select>
+
+<label>VAT %</label>
+<input id="vatRate" type="number" min="0" max="100" step="0.1" value="15" onchange="calc()">
+
+<label class="theme-control">Theme</label>
+<select class="theme-control" onchange="setTheme(this.value)">
+<option value="blue">Blue</option>
+<option value="green">Green</option>
+<option value="red">Red</option>
+<option value="purple">Purple</option>
+<option value="black">Black</option>
+<option value="orange">Orange</option>
+<option value="teal">Teal</option>
+<option value="pink">Pink</option>
+<option value="brown">Brown</option>
+<option value="navy">Navy</option></select>
+
+</div>
+</div>
+</div>
+
+<hr>
+
+<div class="info">
+<div>
+<b>Invoice to:</b>
+<input placeholder="Client Name">
+<input placeholder="Phone">
+<input placeholder="Email">
+<input placeholder="Address">
+<input placeholder="Customer VAT Number">
+</div>
+
+<div class="meta">
+<div class="row"><label>Date</label><input type="date"></div>
+<div class="row"><label>Invoice No</label><input></div>
+</div>
+</div>
+
+<table>
+<thead>
+<tr><th>No</th><th>Description</th><th>Qty</th><th>Price</th><th>Tax</th><th>Total</th></tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
+<div class="totals-bank">
+<div>
+<b class="bank-title">BANKING DETAILS</b>
+<div class="bank-grid">
+<label>Account Name</label><input>
+<label>Account Number</label><input>
+<label>Branch Code</label><input>
+<label>Account Type</label><input>
+</div>
+</div>
+
+<table class="summary">
+<tr><td>Sub Total</td><td><span id="cur1">$</span> <span id="sub">0.00</span></td></tr>
+<tr><td>Tax</td><td><span id="cur2">$</span> <span id="tax">0.00</span></td></tr>
+<tr class="grand"><td>Grand Total</td><td><span id="cur3">$</span> <span id="grand">0.00</span></td></tr>
+</table>
+</div>
+
+<div class="terms-box">
+<b>Terms & Conditions</b>
+<textarea placeholder="Write your terms and conditions here..."></textarea>
+</div>
+
+<div class="thank-you">Thank you for your business</div>
+
+<div class="footer">
+<div class="signature-area">
+<b>Director Signature</b>
+<label class="signature-box" id="sigBox">
+<span>Upload signature</span>
+<img id="sigImg">
+<input type="file" hidden onchange="loadSignature(event)">
+</label>
+</div>
+</div>
+
+<button onclick="window.print()">Print / Save PDF</button>
+
+</div>
+
+<script>
+const tbody=document.getElementById("rows");
+
+for(let i=1;i<=9;i++){
+tbody.innerHTML+=`
+<tr>
+<td>${i}</td>
+<td><input></td>
+<td><input type="number" oninput="calc()"></td>
+<td><input type="number" oninput="calc()"></td>
+<td class="tax">0.00</td>
+<td class="total">0.00</td>
+</tr>`;
+}
+
+function calc(){
+let sub=0,tax=0;
+const rate=parseFloat(vatRate.value)||0;
+const cur=currency.value;
+
+cur1.innerText=cur; cur2.innerText=cur; cur3.innerText=cur;
+
+document.querySelectorAll("#rows tr").forEach(r=>{
+let q=parseFloat(r.cells[2].children[0].value)||0;
+let p=parseFloat(r.cells[3].children[0].value)||0;
+let line=q*p;
+let t=line*(rate/100);
+r.querySelector(".tax").innerText=t.toFixed(2);
+r.querySelector(".total").innerText=(line+t).toFixed(2);
+sub+=line; tax+=t;
+});
+
+sub.innerText=sub.toFixed(2);
+document.getElementById("tax").innerText=tax.toFixed(2);
+grand.innerText=(sub+tax).toFixed(2);
+}
+
+function loadLogo(e){
+logoImg.src=URL.createObjectURL(e.target.files[0]);
+logoImg.style.display="block";
+logoBox.classList.add("uploaded");
+}
+
+function loadSignature(e){
+sigImg.src=URL.createObjectURL(e.target.files[0]);
+sigImg.style.display="block";
+sigBox.classList.add("uploaded");
+}
+
+function setTheme(theme){
+const root=document.documentElement;
+const themes={
+  blue:{main:"#3b73b9",light:"#cfe9f8"},
+  green:{main:"#2e8b57",light:"#d9f3e6"},
+  red:{main:"#c0392b",light:"#f9d6d3"},
+  purple:{main:"#6c5ce7",light:"#e6e4fb"},
+  black:{main:"#222",light:"#e5e5e5"},
+  orange:{main:"#e67e22",light:"#fde6d0"},
+  teal:{main:"#008080",light:"#d5f2f2"},
+  pink:{main:"#e84393",light:"#fbd3e9"},
+  brown:{main:"#8e5a2b",light:"#f0dfd1"},
+  navy:{main:"#1b2a49",light:"#d6dde8"}
+};
+root.style.setProperty("--main",themes[theme].main);
+root.style.setProperty("--light",themes[theme].light);
+}
+</script>
+
+</body>
+</html>
